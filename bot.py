@@ -1,31 +1,26 @@
-import json
+import telebot
 import os
-import telegram
-from flask import Flask, request
 
-TOKEN = "8215589738:AAFYtsklp7838K1HHLQNMln9r6Aj_YGMhlc"
-ADMIN_ID = 5186730282
-bot = telegram.Bot(token=TOKEN)
-app = Flask(__name__)
+TOKEN = os.environ.get('TOKEN')
+ADMIN_ID = 5186730282  # сюда свой ID
 
-@app.route('/', methods=['POST'])
-def webhook():
-    try:
-        update = telegram.Update.de_json(request.get_json(force=True), bot)
-        
-        if update.message and update.message.text == '/start':
-            bot.send_message(chat_id=update.effective_chat.id, text="Привет! Я бот на Netlify!")
-        elif update.message:
-            bot.send_message(chat_id=update.effective_chat.id, text=f"Ты написал: {update.message.text}")
-        
-        return 'ok', 200
-    except Exception as e:
-        print(e)
-        return 'error', 500
+bot = telebot.TeleBot(TOKEN)
 
-@app.route('/', methods=['GET'])
-def index():
-    return 'Bot is running!', 200
+# Проверка на админа
+def is_admin(user_id):
+    return user_id == ADMIN_ID
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.reply_to(message, "Привет! Бот работает!")
+
+@bot.message_handler(func=lambda m: m.text == "админ команда" and is_admin(m.from_user.id))
+def admin_command(message):
+    bot.reply_to(message, "Ты админ!")
+
+@bot.message_handler(func=lambda m: True)
+def echo(message):
+    bot.reply_to(message, f"Ты написал: {message.text}")
+
+print("Бот запущен!")
+bot.infinity_polling()

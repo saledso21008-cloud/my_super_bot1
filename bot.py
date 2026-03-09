@@ -1,7 +1,7 @@
 import telebot
 import os
 
-TOKEN = os.environ.get('TOKEN')
+TOKEN = "8215589738:AAFYtsklp7838K1HHLQNMln9r6Aj_YGMhlc"
 ADMIN_ID = 5186730282  # сюда свой ID
 
 bot = telebot.TeleBot(TOKEN)

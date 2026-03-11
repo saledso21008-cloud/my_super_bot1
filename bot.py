@@ -121,58 +121,46 @@ async def check_long_tasks(app):
                     pass
 
 def create_excel_for_admin():
-    try:
-        db_cursor.execute("""
-            SELECT 
-                u.class,
-                u.full_name,
-                h.subject,
-                h.duration_seconds,
-                h.start_time,
-                h.end_time,
-                h.date
-            FROM homework_sessions h
-            JOIN users u ON h.user_id = u.user_id
-            ORDER BY h.created_at DESC
-        """)
-        
-        data = db_cursor.fetchall()
-        
-        if not data:
-            return None, "❌ Нет данных"
-        
-        rows = []
-        for row in data:
-            class_name, full_name, subject, seconds, start, end, date = row
-            
-            if seconds < 60:
-                duration = f"{seconds} сек"
-            elif seconds % 60 == 0:
-                duration = f"{seconds // 60} мин"
-            else:
-                duration = f"{seconds // 60} мин {seconds % 60} сек"
-            
-            rows.append([
-                class_name,
-                full_name,
-                subject,
-                duration,
-                f"{start}-{end}",
-                date
-            ])
-        
-        df = pd.DataFrame(rows, columns=[
-            'Класс', 'Ученик', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
-        ])
-        
-        filename = 'homework_data.xlsx'
-        df.to_excel(filename, index=False)
-        
-        return filename, "✅ Готово"
-        
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        return None, f"❌ Ошибка: {e}"
+    db_cursor.execute("""
+        SELECT u.class, u.full_name, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
+        FROM homework_sessions h JOIN users u ON h.user_id = u.user_id
+        ORDER BY h.created_at DESC
+    """)
+    data = db_cursor.fetchall()
+    if not data:
+        return None, "❌ Нет данных"
+    rows = []
+    for row in data:
+        cls, name, subj, sec, st, et, date = row
+        if sec < 60:
+            dur = f"{sec} сек"
+        elif sec % 60 == 0:
+            dur = f"{sec//60} мин"
+        else:
+            dur = f"{sec//60} мин {sec%60} сек"
+        rows.append([cls, name, subj, dur, f"{st}-{et}", date])
+    df = pd.DataFrame(rows, columns=['Класс', 'Ученик', 'Предмет', 'Время', 'Начало-Конец', 'Дата'])
+    fname = 'homework_data.xlsx'
+    df.to_excel(fname, index=False)
+    db_cursor.execute("SELECT COUNT(*) FROM users")
+    users_cnt = db_cursor.fetchone()[0]
+    db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
+    sess_cnt = db_cursor.fetchone()[0]
+    return fname, f"📊 Всего записей: {sess_cnt}\n👥 Учеников: {users_cnt}"
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    db_cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,))
+    existing = db_cursor.fetchone()
+    if existing:
+        if is_admin(user.id):
+            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel", "🔔 Проверить долгие задания"]]
+        else:
+            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]
+        await update.message.reply_text("Выбери действие:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
+    else:
+        await update.message.reply_text("📝 Для регистрации напиши свою фамилию и имя:", reply_markup=ReplyKeyboardRemove())
+        context.user_data['step'] = 'name'
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user

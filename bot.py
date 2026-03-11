@@ -122,20 +122,18 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
-        # Правильный запрос с JOIN
         db_cursor.execute("""
             SELECT 
-                users.full_name,
-                users.class,
-                users.user_id,
-                homework_sessions.subject,
-                homework_sessions.duration_seconds,
-                homework_sessions.start_time,
-                homework_sessions.end_time,
-                homework_sessions.date
-            FROM homework_sessions
-            JOIN users ON homework_sessions.user_id = users.user_id
-            ORDER BY homework_sessions.created_at DESC
+                u.class,
+                u.full_name,
+                h.subject,
+                h.duration_seconds,
+                h.start_time,
+                h.end_time,
+                h.date
+            FROM homework_sessions h
+            JOIN users u ON h.user_id = u.user_id
+            ORDER BY h.created_at DESC
         """)
         
         data = db_cursor.fetchall()
@@ -145,9 +143,8 @@ def create_excel_for_admin():
         
         rows = []
         for row in data:
-            full_name, class_name, tg_id, subject, seconds, start, end, date = row
+            class_name, full_name, subject, seconds, start, end, date = row
             
-            # Форматируем время
             if seconds < 60:
                 duration = f"{seconds} сек"
             elif seconds % 60 == 0:
@@ -158,7 +155,6 @@ def create_excel_for_admin():
             rows.append([
                 class_name,
                 full_name,
-                tg_id,
                 subject,
                 duration,
                 f"{start}-{end}",
@@ -166,7 +162,7 @@ def create_excel_for_admin():
             ])
         
         df = pd.DataFrame(rows, columns=[
-            'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
+            'Класс', 'Ученик', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
         ])
         
         filename = 'homework_data.xlsx'

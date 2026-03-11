@@ -121,31 +121,36 @@ async def check_long_tasks(app):
                     pass
 
 def create_excel_for_admin():
-    db_cursor.execute("""
-        SELECT u.class, u.full_name, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
-        FROM homework_sessions h JOIN users u ON h.user_id = u.user_id
+    db_cursor.execute(""" 
+        SELECT u.class, u.full_name, u.user_id, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
+        FROM homework_sessions h 
+        JOIN users u ON h.user_id = u.user_id
         ORDER BY h.created_at DESC
     """)
     data = db_cursor.fetchall()
     if not data:
         return None, "❌ Нет данных"
+
     rows = []
     for row in data:
-        cls, name, subj, sec, st, et, date = row
+        cls, name, tg_id, subj, sec, st, et, date = row
         if sec < 60:
             dur = f"{sec} сек"
         elif sec % 60 == 0:
             dur = f"{sec//60} мин"
         else:
             dur = f"{sec//60} мин {sec%60} сек"
-        rows.append([cls, name, subj, dur, f"{st}-{et}", date])
-    df = pd.DataFrame(rows, columns=['Класс', 'Ученик', 'Предмет', 'Время', 'Начало-Конец', 'Дата'])
+        rows.append([cls, name, tg_id, subj, dur, f"{st}-{et}", date])
+
+    df = pd.DataFrame(rows, columns=['Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'])
     fname = 'homework_data.xlsx'
     df.to_excel(fname, index=False)
+    
     db_cursor.execute("SELECT COUNT(*) FROM users")
     users_cnt = db_cursor.fetchone()[0]
     db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
     sess_cnt = db_cursor.fetchone()[0]
+    
     return fname, f"📊 Всего записей: {sess_cnt}\n👥 Учеников: {users_cnt}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

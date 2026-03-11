@@ -318,9 +318,9 @@ async def auto_reminder_loop(app):
             await check_long_tasks(app)
         await asyncio.sleep(60)
 
-async def main():
+def main():
     print("=" * 50)
-    print("🤖 Бот для Railway")
+    print("🤖 Бот для железной дороги")
     print("=" * 50)
     db_cursor.execute("SELECT COUNT(*) FROM users")
     print(f"👥 Пользователей: {db_cursor.fetchone()[0]}")
@@ -328,9 +328,14 @@ async def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    asyncio.create_task(auto_reminder_loop(app))
+    
+    # Запускаем фоновые задачи
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.create_task(auto_reminder_loop(app))
+    
     print("✅ Бот запущен!")
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

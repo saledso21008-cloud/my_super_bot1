@@ -1,18 +1,64 @@
 # -*- coding: utf-8 -*-
-"""
-Homework Time Tracker - ДЛЯ ХОСТИНГА (RAILWAY / RENDER)
-"""
-
-import logging
 import sqlite3
+import asyncio
+import logging
 import pandas as pd
 import os
 import math
-import asyncio
 from datetime import datetime, timedelta
 import pytz
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+
+# ====== ЭТО ВСТАВЛЯЕШЬ В САМОЕ НАЧАЛО ======
+def init_db():
+    conn = sqlite3.connect('homework.db', check_same_thread=False)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE,
+            username TEXT,
+            full_name TEXT,
+            class TEXT,
+            registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS homework_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            subject TEXT,
+            date DATE,
+            start_time TEXT,
+            end_time TEXT,
+            duration_seconds INTEGER,
+            duration_minutes INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS active_timers (
+            user_id INTEGER PRIMARY KEY,
+            subject TEXT,
+            start_time TIMESTAMP,
+            last_check_time TIMESTAMP,
+            check_count INTEGER DEFAULT 0
+        )
+    ''')
+    
+    conn.commit()
+    print("✅ База данных готова")
+    return conn, cursor
+
+# ====== СОЗДАЁМ БАЗУ ПРЯМО ЗДЕСЬ ======
+db_conn, db_cursor = init_db()
+
+# ====== ТВОЙ ОСТАЛЬНОЙ КОД ======
+# Сюда вставляешь всё остальное: токен, функции, хендлеры и т.д.
 
 # ТОКЕН и НАСТРОЙКИ
 TOKEN = "8215589738:AAFYtsklp7838K1HHLQNMln9r6Aj_YGMhlc"

@@ -122,6 +122,7 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
+        # Берём всё из обеих таблиц для проверки
         db_cursor.execute("""
             SELECT 
                 u.class,
@@ -133,29 +134,39 @@ def create_excel_for_admin():
                 h.end_time,
                 h.date
             FROM homework_sessions h 
-            JOIN users u ON h.user_id = u.user_id 
+            LEFT JOIN users u ON h.user_id = u.user_id
             ORDER BY h.created_at DESC
         """)
         
         data = db_cursor.fetchall()
         
+        # Если данных нет — сразу говорим
         if not data:
-            return None, "❌ Нет данных"
+            return None, "❌ В базе нет завершённых заданий"
         
         rows = []
         for row in data:
-            # Распаковываем 8 полей (было 7, добавился user_id)
             class_name, full_name, tg_id, subject, seconds, start_time, end_time, date = row
             
-            # Форматируем время
-            if seconds < 60:
-                duration = f"{seconds} сек"
-            elif seconds % 60 == 0:
-                duration = f"{seconds // 60} мин"
-            else:
-                duration = f"{seconds // 60} мин {seconds % 60} сек"
+            # Защита от пустых значений
+            class_name = class_name or "—"
+            full_name = full_name or "—"
+            tg_id = tg_id or "—"
+            subject = subject or "—"
+            start_time = start_time or "—"
+            end_time = end_time or "—"
+            date = date or "—"
             
-            # Добавляем строку с новым полем
+            # Форматируем время красиво
+            if seconds and seconds < 60:
+                duration = f"{seconds} сек"
+            elif seconds and seconds % 60 == 0:
+                duration = f"{seconds // 60} мин"
+            elif seconds:
+                duration = f"{seconds // 60} мин {seconds % 60} сек"
+            else:
+                duration = "—"
+            
             rows.append([
                 class_name,
                 full_name,
@@ -166,7 +177,7 @@ def create_excel_for_admin():
                 date
             ])
         
-        # Создаём DataFrame с новым заголовком
+        # Создаём DataFrame
         df = pd.DataFrame(rows, columns=[
             'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
         ])
@@ -185,7 +196,7 @@ def create_excel_for_admin():
         return filename, caption
         
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"🔥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
         return None, f"❌ Ошибка: {e}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

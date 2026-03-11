@@ -122,7 +122,6 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
-        # Берём всё из обеих таблиц для проверки
         db_cursor.execute("""
             SELECT 
                 u.class,
@@ -134,38 +133,25 @@ def create_excel_for_admin():
                 h.end_time,
                 h.date
             FROM homework_sessions h 
-            LEFT JOIN users u ON h.user_id = u.user_id
+            JOIN users u ON h.user_id = u.user_id
             ORDER BY h.created_at DESC
         """)
         
         data = db_cursor.fetchall()
         
-        # Если данных нет — сразу говорим
         if not data:
-            return None, "❌ В базе нет завершённых заданий"
+            return None, "❌ Нет завершённых заданий"
         
         rows = []
         for row in data:
             class_name, full_name, tg_id, subject, seconds, start_time, end_time, date = row
             
-            # Защита от пустых значений
-            class_name = class_name or "—"
-            full_name = full_name or "—"
-            tg_id = tg_id or "—"
-            subject = subject or "—"
-            start_time = start_time or "—"
-            end_time = end_time or "—"
-            date = date or "—"
-            
-            # Форматируем время красиво
-            if seconds and seconds < 60:
+            if seconds < 60:
                 duration = f"{seconds} сек"
-            elif seconds and seconds % 60 == 0:
+            elif seconds % 60 == 0:
                 duration = f"{seconds // 60} мин"
-            elif seconds:
-                duration = f"{seconds // 60} мин {seconds % 60} сек"
             else:
-                duration = "—"
+                duration = f"{seconds // 60} мин {seconds % 60} сек"
             
             rows.append([
                 class_name,
@@ -177,7 +163,6 @@ def create_excel_for_admin():
                 date
             ])
         
-        # Создаём DataFrame
         df = pd.DataFrame(rows, columns=[
             'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
         ])
@@ -185,7 +170,6 @@ def create_excel_for_admin():
         filename = 'homework_data.xlsx'
         df.to_excel(filename, index=False)
         
-        # Считаем статистику
         db_cursor.execute("SELECT COUNT(*) FROM users")
         users_count = db_cursor.fetchone()[0]
         db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
@@ -196,7 +180,7 @@ def create_excel_for_admin():
         return filename, caption
         
     except Exception as e:
-        print(f"🔥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
+        print(f"Ошибка: {e}")
         return None, f"❌ Ошибка: {e}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

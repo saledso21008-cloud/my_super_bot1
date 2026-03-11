@@ -122,68 +122,24 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
-        # Запрос с JOIN — берём пользователей
-        db_cursor.execute("""
-            SELECT 
-                u.class,
-                u.full_name,
-                u.user_id,
-                h.subject,
-                h.duration_seconds,
-                h.start_time,
-                h.end_time,
-                h.date
-            FROM homework_sessions h
-            JOIN users u ON h.user_id = u.user_id
-            ORDER BY h.created_at DESC
-        """)
-        
+        # Берём всё подряд без JOIN
+        db_cursor.execute("SELECT * FROM homework_sessions")
         data = db_cursor.fetchall()
         
         if not data:
-            return None, "❌ Нет данных"
+            return None, "❌ В таблице homework_sessions пусто"
         
         rows = []
         for row in data:
-            class_name, full_name, tg_id, subject, seconds, start, end, date = row
-            
-            # Форматируем время
-            if seconds < 60:
-                duration = f"{seconds} сек"
-            elif seconds % 60 == 0:
-                duration = f"{seconds // 60} мин"
-            else:
-                duration = f"{seconds // 60} мин {seconds % 60} сек"
-            
-            rows.append([
-                class_name,
-                full_name,
-                tg_id,
-                subject,
-                duration,
-                f"{start}-{end}",
-                date
-            ])
+            rows.append(list(row))
         
-        df = pd.DataFrame(rows, columns=[
-            'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
-        ])
-        
-        filename = 'homework_data.xlsx'
+        df = pd.DataFrame(rows)
+        filename = 'debug.xlsx'
         df.to_excel(filename, index=False)
         
-        # Статистика
-        db_cursor.execute("SELECT COUNT(*) FROM users")
-        users_cnt = db_cursor.fetchone()[0]
-        db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
-        sessions_cnt = db_cursor.fetchone()[0]
-        
-        caption = f"📊 Всего записей: {sessions_cnt}\n👥 Учеников: {users_cnt}"
-        
-        return filename, caption
+        return filename, f"✅ Сырых записей: {len(data)}"
         
     except Exception as e:
-        print(f"Ошибка: {e}")
         return None, f"❌ Ошибка: {e}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

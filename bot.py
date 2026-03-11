@@ -39,7 +39,8 @@ SUBJECTS = [
 def init_db():
     conn = sqlite3.connect('homework.db', check_same_thread=False)
     cursor = conn.cursor()
-
+    
+    # Users
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +51,8 @@ def init_db():
             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-
+    
+    # Homework sessions
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS homework_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,36 +63,24 @@ def init_db():
             end_time TEXT,
             duration_seconds INTEGER,
             duration_minutes INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (user_id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-
+    
+    # Active timers
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS active_timers (
             user_id INTEGER PRIMARY KEY,
             subject TEXT,
             start_time TIMESTAMP,
             last_check_time TIMESTAMP,
-            check_count INTEGER DEFAULT 0,
-            FOREIGN KEY (user_id) REFERENCES users (user_id)
+            check_count INTEGER DEFAULT 0
         )
     ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS reminders_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            reminder_time TEXT,
-            sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-
+    
     conn.commit()
+    print("✅ База данных готова (таблицы созданы или уже были)")
     return conn, cursor
-
-db_conn, db_cursor = init_db()
-print("✅ База данных создана")
 
 # Функции для таймеров
 def save_active_timer(user_id: int, subject: str, start_time: datetime):

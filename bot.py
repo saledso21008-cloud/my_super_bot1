@@ -162,20 +162,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📝 Для регистрации напиши свою фамилию и имя:", reply_markup=ReplyKeyboardRemove())
         context.user_data['step'] = 'name'
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    db_cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,))
-    existing = db_cursor.fetchone()
-    if existing:
-        if is_admin(user.id):
-            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel", "🔔 Проверить долгие задания"]]
-        else:
-            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]
-        await update.message.reply_text("Выбери действие:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
-    else:
-        await update.message.reply_text("📝 Для регистрации напиши свою фамилию и имя:", reply_markup=ReplyKeyboardRemove())
-        context.user_data['step'] = 'name'
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text

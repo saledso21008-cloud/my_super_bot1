@@ -121,37 +121,72 @@ async def check_long_tasks(app):
                     pass
 
 def create_excel_for_admin():
-    db_cursor.execute(""" 
-        SELECT u.class, u.full_name, u.user_id, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
-        FROM homework_sessions h 
-        JOIN users u ON h.user_id = u.user_id
-        ORDER BY h.created_at DESC
-    """)
-    data = db_cursor.fetchall()
-    if not data:
-        return None, "❌ Нет данных"
-
-    rows = []
-    for row in data:
-        cls, name, tg_id, subj, sec, st, et, date = row
-        if sec < 60:
-            dur = f"{sec} сек"
-        elif sec % 60 == 0:
-            dur = f"{sec//60} мин"
-        else:
-            dur = f"{sec//60} мин {sec%60} сек"
-        rows.append([cls, name, tg_id, subj, dur, f"{st}-{et}", date])
-
-    df = pd.DataFrame(rows, columns=['Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'])
-    fname = 'homework_data.xlsx'
-    df.to_excel(fname, index=False)
-    
-    db_cursor.execute("SELECT COUNT(*) FROM users")
-    users_cnt = db_cursor.fetchone()[0]
-    db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
-    sess_cnt = db_cursor.fetchone()[0]
-    
-    return fname, f"📊 Всего записей: {sess_cnt}\n👥 Учеников: {users_cnt}"
+    try:
+        db_cursor.execute("""
+            SELECT 
+                u.class,
+                u.full_name,
+                u.user_id,
+                h.subject,
+                h.duration_seconds,
+                h.start_time,
+                h.end_time,
+                h.date
+            FROM homework_sessions h 
+            JOIN users u ON h.user_id = u.user_id 
+            ORDER BY h.created_at DESC
+        """)
+        
+        data = db_cursor.fetchall()
+        
+        if not data:
+            return None, "❌ Нет данных"
+        
+        rows = []
+        for row in data:
+            # Распаковываем 8 полей (было 7, добавился user_id)
+            class_name, full_name, tg_id, subject, seconds, start_time, end_time, date = row
+            
+            # Форматируем время
+            if seconds < 60:
+                duration = f"{seconds} сек"
+            elif seconds % 60 == 0:
+                duration = f"{seconds // 60} мин"
+            else:
+                duration = f"{seconds // 60} мин {seconds % 60} сек"
+            
+            # Добавляем строку с новым полем
+            rows.append([
+                class_name,
+                full_name,
+                tg_id,
+                subject,
+                duration,
+                f"{start_time}-{end_time}",
+                date
+            ])
+        
+        # Создаём DataFrame с новым заголовком
+        df = pd.DataFrame(rows, columns=[
+            'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
+        ])
+        
+        filename = 'homework_data.xlsx'
+        df.to_excel(filename, index=False)
+        
+        # Считаем статистику
+        db_cursor.execute("SELECT COUNT(*) FROM users")
+        users_count = db_cursor.fetchone()[0]
+        db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
+        sessions_count = db_cursor.fetchone()[0]
+        
+        caption = f"📊 Всего записей: {sessions_count}\n👥 Учеников: {users_count}"
+        
+        return filename, caption
+        
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return None, f"❌ Ошибка: {e}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user

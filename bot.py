@@ -122,6 +122,7 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
+        # Запрос с JOIN — берём пользователей
         db_cursor.execute("""
             SELECT 
                 u.class,
@@ -132,7 +133,7 @@ def create_excel_for_admin():
                 h.start_time,
                 h.end_time,
                 h.date
-            FROM homework_sessions h 
+            FROM homework_sessions h
             JOIN users u ON h.user_id = u.user_id
             ORDER BY h.created_at DESC
         """)
@@ -140,12 +141,13 @@ def create_excel_for_admin():
         data = db_cursor.fetchall()
         
         if not data:
-            return None, "❌ Нет завершённых заданий"
+            return None, "❌ Нет данных"
         
         rows = []
         for row in data:
-            class_name, full_name, tg_id, subject, seconds, start_time, end_time, date = row
+            class_name, full_name, tg_id, subject, seconds, start, end, date = row
             
+            # Форматируем время
             if seconds < 60:
                 duration = f"{seconds} сек"
             elif seconds % 60 == 0:
@@ -159,7 +161,7 @@ def create_excel_for_admin():
                 tg_id,
                 subject,
                 duration,
-                f"{start_time}-{end_time}",
+                f"{start}-{end}",
                 date
             ])
         
@@ -170,12 +172,13 @@ def create_excel_for_admin():
         filename = 'homework_data.xlsx'
         df.to_excel(filename, index=False)
         
+        # Статистика
         db_cursor.execute("SELECT COUNT(*) FROM users")
-        users_count = db_cursor.fetchone()[0]
+        users_cnt = db_cursor.fetchone()[0]
         db_cursor.execute("SELECT COUNT(*) FROM homework_sessions")
-        sessions_count = db_cursor.fetchone()[0]
+        sessions_cnt = db_cursor.fetchone()[0]
         
-        caption = f"📊 Всего записей: {sessions_count}\n👥 Учеников: {users_count}"
+        caption = f"📊 Всего записей: {sessions_cnt}\n👥 Учеников: {users_cnt}"
         
         return filename, caption
         

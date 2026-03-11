@@ -122,24 +122,60 @@ async def check_long_tasks(app):
 
 def create_excel_for_admin():
     try:
-        # Берём всё подряд без JOIN
-        db_cursor.execute("SELECT * FROM homework_sessions")
+        # Правильный запрос с JOIN
+        db_cursor.execute("""
+            SELECT 
+                users.full_name,
+                users.class,
+                users.user_id,
+                homework_sessions.subject,
+                homework_sessions.duration_seconds,
+                homework_sessions.start_time,
+                homework_sessions.end_time,
+                homework_sessions.date
+            FROM homework_sessions
+            JOIN users ON homework_sessions.user_id = users.user_id
+            ORDER BY homework_sessions.created_at DESC
+        """)
+        
         data = db_cursor.fetchall()
         
         if not data:
-            return None, "❌ В таблице homework_sessions пусто"
+            return None, "❌ Нет данных"
         
         rows = []
         for row in data:
-            rows.append(list(row))
+            full_name, class_name, tg_id, subject, seconds, start, end, date = row
+            
+            # Форматируем время
+            if seconds < 60:
+                duration = f"{seconds} сек"
+            elif seconds % 60 == 0:
+                duration = f"{seconds // 60} мин"
+            else:
+                duration = f"{seconds // 60} мин {seconds % 60} сек"
+            
+            rows.append([
+                class_name,
+                full_name,
+                tg_id,
+                subject,
+                duration,
+                f"{start}-{end}",
+                date
+            ])
         
-        df = pd.DataFrame(rows)
-        filename = 'debug.xlsx'
+        df = pd.DataFrame(rows, columns=[
+            'Класс', 'Ученик', 'Telegram ID', 'Предмет', 'Время', 'Начало-Конец', 'Дата'
+        ])
+        
+        filename = 'homework_data.xlsx'
         df.to_excel(filename, index=False)
         
-        return filename, f"✅ Сырых записей: {len(data)}"
+        return filename, "✅ Готово"
         
     except Exception as e:
+        print(f"Ошибка: {e}")
         return None, f"❌ Ошибка: {e}"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

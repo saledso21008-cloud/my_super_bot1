@@ -121,6 +121,7 @@ async def check_long_tasks(app):
                     pass
 
 def create_excel_for_admin():
+    print(f"📊 Запрос Excel, всего строк в БД: {db_cursor.execute('SELECT COUNT(*) FROM homework_sessions').fetchone()[0]}")
     db_cursor.execute("""
         SELECT u.class, u.full_name, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
         FROM homework_sessions h JOIN users u ON h.user_id = u.user_id
@@ -183,6 +184,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data['start_datetime'] = start
             end = datetime.now(MOSCOW_TZ)
             sec = int((end - start).total_seconds())
+            print(f"💾 СОХРАНЯЮ задание для user {user.id}, предмет {subj}, секунд {sec}")
             db_cursor.execute("INSERT INTO homework_sessions (user_id, subject, date, start_time, end_time, duration_seconds, duration_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)",
                               (user.id, subj, start.strftime("%d.%m.%Y"), start.strftime("%H:%M:%S"), end.strftime("%H:%M:%S"), sec, sec//60))
             db_conn.commit()
@@ -241,6 +243,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             start = context.user_data['start_datetime']
             end = datetime.now(MOSCOW_TZ)
             sec = int((end - start).total_seconds())
+            print(f"💾 СОХРАНЯЮ задание для user {user.id}, предмет {subj}, секунд {sec}")
             db_cursor.execute("INSERT INTO homework_sessions (user_id, subject, date, start_time, end_time, duration_seconds, duration_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)",
                               (user.id, subj, start.strftime("%d.%m.%Y"), start.strftime("%H:%M:%S"), end.strftime("%H:%M:%S"), sec, sec//60))
             db_conn.commit()

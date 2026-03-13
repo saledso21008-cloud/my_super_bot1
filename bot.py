@@ -147,7 +147,6 @@ def create_excel_for_admin():
     df.to_excel('homework_data.xlsx', index=False)
     
     return 'homework_data.xlsx', f"📊 Всего записей: {len(data)}"
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db_cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,))

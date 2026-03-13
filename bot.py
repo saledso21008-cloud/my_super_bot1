@@ -135,13 +135,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     rows = []
-    for row in data:
-        user_id, name, sec, start, end, date = row
-        minutes = sec // 60
-        rows.append([user_id, name, minutes, f"{start} — {end}", date])
+for row in data:
+    user_id, name, sec, start, end, date = row
+    minutes = sec // 60
+    seconds = sec % 60
+    rows.append([user_id, name, minutes, seconds, f"{start} — {end}", date])
 
-    df = pd.DataFrame(rows, columns=["ID", "Имя", "Минут", "Начало — Конец", "Дата"])
-    df.to_excel("data.xlsx", index=False)
+df = pd.DataFrame(rows, columns=["ID", "Имя", "Минут", "Начало — Конец", "Дата"])
+df.to_excel("data.xlsx", index=False)
 
     with open("data.xlsx", "rb") as f:
         await update.message.reply_document(f)

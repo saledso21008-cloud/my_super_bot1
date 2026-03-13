@@ -1,26 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-Homework Time Tracker - ДЛЯ COLAB (НЕ ОСТАНАВЛИВАЕТСЯ)
-"""
-
-# 1. Установка библиотек
-!pip install python-telegram-bot==20.7 nest_asyncio pytz pandas openpyxl -q
-print("✅ Библиотеки установлены\n")
-
-# 2. Импорт
 import logging
 import sqlite3
 import pandas as pd
 import os
 import math
 import asyncio
-import threading
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
-import nest_asyncio
-nest_asyncio.apply()
-
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 

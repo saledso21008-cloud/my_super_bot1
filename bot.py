@@ -122,31 +122,12 @@ async def check_long_tasks(app):
                     pass
 
 def create_excel_for_admin():
-    data = db_cursor.execute("""
-        SELECT u.class, u.full_name, h.subject, h.duration_seconds, h.start_time, h.end_time, h.date
-        FROM homework_sessions h
-        JOIN users u ON h.user_id = u.user_id
-        ORDER BY h.created_at DESC
-    """).fetchall()
-    
+    data = db_cursor.execute("SELECT * FROM homework_sessions").fetchall()
     if not data:
         return None, "❌ Нет данных"
-    
-    rows = []
-    for row in data:
-        cls, name, subj, sec, st, et, date = row
-        if sec < 60:
-            dur = f"{sec} сек"
-        elif sec % 60 == 0:
-            dur = f"{sec // 60} мин"
-        else:
-            dur = f"{sec // 60} мин {sec % 60} сек"
-        rows.append([cls, name, subj, dur, f"{st}-{et}", date])
-    
-    df = pd.DataFrame(rows, columns=['Класс', 'Ученик', 'Предмет', 'Время', 'Начало-Конец', 'Дата'])
-    df.to_excel('homework_data.xlsx', index=False)
-    
-    return 'homework_data.xlsx', f"📊 Всего записей: {len(data)}"
+    df = pd.DataFrame(data)
+    df.to_excel("homework_data.xlsx", index=False)
+    return "homework_data.xlsx", f"📊 Всего записей: {len(data)}"
     
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user

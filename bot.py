@@ -116,7 +116,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Отправлено")
         return
 
-    if text == "📊 Получить Excel" and is_admin(user.id):
+        if text == "📊 Получить Excel" and is_admin(user.id):
         data = db_cursor.execute("""
             SELECT 
                 u.user_id,
@@ -138,9 +138,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for row in data:
             user_id, name, sec, start, end, date = row
             minutes = sec // 60
-            rows.append([user_id, name, minutes, f"{start} — {end}", date])
+            seconds = sec % 60
+            time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
+            rows.append([user_id, name, time_str, f"{start} — {end}", date])
 
-        df = pd.DataFrame(rows, columns=["ID", "Имя", "Минут", "Начало — Конец", "Дата"])
+        df = pd.DataFrame(rows, columns=["ID", "Имя", "Время", "Начало — Конец", "Дата"])
         df.to_excel("data.xlsx", index=False)
 
         with open("data.xlsx", "rb") as f:

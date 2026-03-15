@@ -58,22 +58,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     step = context.user_data.get('step', '')
 
     if text == "/resetme":
-    db_cursor.execute("DELETE FROM users WHERE user_id = ?", (user.id,))
-    db_conn.commit()
-    await update.message.reply_text("✅ Ты удалён из базы. Напиши /start для новой регистрации.")
-    return
-    
-    if step == 'name':
-        context.user_data['name'] = text
-        context.user_data['step'] = 'class'
-        await update.message.reply_text("Выбери класс:", reply_markup=ReplyKeyboardMarkup([["7А", "7Б", "7В"], ["8А", "8Б", "8В"], ["9А", "9Б", "9В"], ["10(гуманитарный)", "10(информационно-технологический)"], ["11А"]], resize_keyboard=True))
+        db_cursor.execute("DELETE FROM users WHERE user_id = ?", (user.id,))
+        db_conn.commit()
+        await update.message.reply_text("Вы уверены? Нажми /start для новой регистрации.")
         return
 
-    if step == 'class':
+    if step == "name":
+        context.user_data['name'] = text
+        context.user_data['step'] = 'class'
+        await update.message.reply_text("Выбери класс:", reply_markup=ReplyKeyboardMarkup([["7A", "7B", "7C"], ["8A", "8B", "8C"], ["9A", "9B", "9C"], ["10(gym)", "11(home)"]]))
+        return
+
+    if step == "class":
         db_cursor.execute("INSERT INTO users VALUES (NULL, ?, ?, ?, ?, CURRENT_TIMESTAMP)", (user.id, user.username, context.user_data['name'], text))
         db_conn.commit()
         context.user_data.clear()
-        await update.message.reply_text("✅ Регистрация завершена!")
+        await update.message.reply_text("Регистрация завершена!")
         await show_main_menu(update, user.id)
         return
 

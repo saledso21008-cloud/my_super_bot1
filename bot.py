@@ -57,6 +57,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     step = context.user_data.get('step', '')
 
+    if text == "/resetme":
+    db_cursor.execute("DELETE FROM users WHERE user_id = ?", (user.id,))
+    db_conn.commit()
+    await update.message.reply_text("✅ Ты удалён из базы. Напиши /start для новой регистрации.")
+    return
+    
     if step == 'name':
         context.user_data['name'] = text
         context.user_data['step'] = 'class'

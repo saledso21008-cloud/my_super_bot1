@@ -116,37 +116,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Отправлено")
         return
 
-   if text == "📊 Получить Excel" and is_admin(user.id):
-    data = db_cursor.execute("""
-        SELECT 
-            u.user_id,
-            u.full_name,
-            h.duration_seconds,
-            h.start_time,
-            h.end_time,
-            h.date
-        FROM homework_sessions h
-        JOIN users u ON h.user_id = u.user_id
-        ORDER BY h.created_at DESC
-    """).fetchall()
+    if text == "📊 Получить Excel" and is_admin(user.id):
+        data = db_cursor.execute("""
+            SELECT 
+                u.user_id,
+                u.full_name,
+                h.duration_seconds,
+                h.start_time,
+                h.end_time,
+                h.date
+            FROM homework_sessions h
+            JOIN users u ON h.user_id = u.user_id
+            ORDER BY h.created_at DESC
+        """).fetchall()
 
-    if not data:
-        await update.message.reply_text("❌ Нет данных")
+        if not data:
+            await update.message.reply_text("❌ Нет данных")
+            return
+
+        rows = []
+        for row in data:
+            user_id, name, sec, start, end, date = row
+            minutes = sec // 60
+            rows.append([user_id, name, minutes, f"{start} — {end}", date])
+
+        df = pd.DataFrame(rows, columns=["ID", "Имя", "Минут", "Начало — Конец", "Дата"])
+        df.to_excel("data.xlsx", index=False)
+
+        with open("data.xlsx", "rb") as f:
+            await update.message.reply_document(f)
         return
-
-    rows = []
-    for row in data:
-        user_id, name, sec, start, end, date = row
-        minutes = sec // 60
-        seconds = sec % 60
-        rows.append([user_id, name, minutes, seconds, f"{start} — {end}", date])
-
-    df = pd.DataFrame(rows, columns=["ID", "Имя", "Минут", "Секунд", "Начало — Конец", "Дата"])
-    df.to_excel("data.xlsx", index=False)
-
-    with open("data.xlsx", "rb") as f:
-        await update.message.reply_document(f)
-    return
 
 async def show_main_menu(update: Update, user_id: int):
     kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel"]] if is_admin(user_id) else [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]

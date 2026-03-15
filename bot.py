@@ -44,7 +44,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel"]] if is_admin(user.id) else [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]
         await update.message.reply_text("Выбери действие:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
     else:
-        await update.message.reply_text("📝 Для регистрации напиши фамилию и имя:", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text(
+            "📝 Для регистрации напиши фамилию и имя.\n\n"
+            "🙏Убедительная просьба пользоваться ботом регулярно🕐, всего 10 дней до конца четверти, тем самым вы поможете с проектом, спасибо за понимание❤
+            ❗ Используя бота, вы соглашаетесь на передачу и обработку информации о вашей успеваемости.",
+            reply_markup=ReplyKeyboardRemove()
+        )
         context.user_data['step'] = 'name'
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):

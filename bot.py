@@ -126,7 +126,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Отправлено")
         return
 
-        if text == "📊 Получить Excel" and is_admin(user.id):
+    if text == "📊 Получить Excel" and is_admin(user.id):
         data = db_cursor.execute("""
             SELECT 
                 u.user_id,

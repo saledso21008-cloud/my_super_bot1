@@ -56,6 +56,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     step = context.user_data.get('step', '')
 
+    if text == "/users":
+        count = db_cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        await update.message.reply_text(f"👥 Всего пользователей в боте: {count}")
+        return
+    
     if text == "/resetme":
         db_cursor.execute("DELETE FROM users WHERE user_id = ?", (user.id,))
         db_conn.commit()

@@ -131,6 +131,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             SELECT 
                 u.user_id,
                 u.full_name,
+                h.subject,
                 h.duration_seconds,
                 h.start_time,
                 h.end_time,
@@ -146,13 +147,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         rows = []
         for row in data:
-            user_id, name, sec, start, end, date = row
+            user_id, name, subject, sec, start, end, date = row
             minutes = sec // 60
             seconds = sec % 60
             time_str = f"{minutes} мин {seconds} сек" if minutes > 0 else f"{seconds} сек"
-            rows.append([user_id, name, time_str, f"{start} — {end}", date])
+            rows.append([user_id, name, subject, time_str, f"{start} — {end}", date])
 
-        df = pd.DataFrame(rows, columns=["ID", "Имя", "Время", "Начало — Конец", "Дата"])
+        df = pd.DataFrame(rows, columns=["ID", "Имя", "Предмет", "Время", "Начало — Конец", "Дата"])
         df.to_excel("data.xlsx", index=False)
 
         with open("data.xlsx", "rb") as f:

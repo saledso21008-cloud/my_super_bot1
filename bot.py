@@ -65,7 +65,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if step == "name":
         context.user_data['name'] = text
         context.user_data['step'] = 'class'
-        await update.message.reply_text("Выбери класс:", reply_markup=ReplyKeyboardMarkup([["7A", "7B", "7C"], ["8A", "8B", "8C"], ["9A", "9B", "9C"], ["10(gym)", "11(home)"]]))
+        await update.message.reply_text("Выбери класс:", reply_markup=ReplyKeyboardMarkup([["7A", "7Б", "7В"], ["8A", "8Б", "8В"], ["9A", "9Б", "9В"], ["10А", "11А"]]))
         return
 
     if step == "class":

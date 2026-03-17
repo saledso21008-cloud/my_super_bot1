@@ -70,7 +70,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if step == "name":
         context.user_data['name'] = text
         context.user_data['step'] = 'class'
-        await update.message.reply_text("Выбери класс:", reply_markup=ReplyKeyboardMarkup([["7A", "7Б", "7В"], ["8A", "8Б", "8В"], ["9A", "9Б", "9В"], ["10А", "11А"]]))
+        await update.message.reply_text(
+            "Выбери свой класс:",
+            reply_markup=ReplyKeyboardMarkup(
+                [
+                    ["7А", "7Б", "7В"],
+                    ["8А", "8Б", "8В"],
+                    ["9А", "9Б", "9В"],
+                    ["10(гуманитарный)", "10(информационно-технологический)"],
+                    ["11А"]
+                ],
+                resize_keyboard=True,
+                one_time_keyboard=True
+            )
+        )
         return
 
     if step == "class":
@@ -81,7 +94,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db_conn.commit()
         context.user_data.clear()
         await update.message.reply_text("✅ Регистрация завершена!")
-        await show_main_menu(update, user.id)   # 👈 ЭТО ВАЖНО
+        await show_main_menu(update, user.id)
         return
 
     if text == "📚 Начать задание":

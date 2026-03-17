@@ -82,15 +82,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if text == "📚 Начать задание":
+        # Проверяем, есть ли пользователь в базе
+        user_in_db = db_cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,)).fetchone()
+        if not user_in_db:
+            await update.message.reply_text(
+                "❌ Ваш аккаунт не найден в боте.\n"
+                "Возможно, данные были сброшены.\n\n"
+                "📝 Пожалуйста, зарегистрируйтесь заново, написав своё имя и фамилию:"
+            )
+            context.user_data['step'] = 'name'
+            return
+
+        # Если пользователь есть — показываем предметы
         kb = [SUBJECTS[i:i+2] for i in range(0, len(SUBJECTS), 2)] + [["🏠 Главное меню"]]
         await update.message.reply_text("Выбери предмет:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
-        return
-
-    if text in SUBJECTS:
-        context.user_data['current_subject'] = text
-        context.user_data['start_datetime'] = datetime.now(MOSCOW_TZ)
-        save_active_timer(user.id, text, context.user_data['start_datetime'])
-        await update.message.reply_text(f"✅ Начато: {text}", reply_markup=ReplyKeyboardMarkup([["⏹️ Завершить"]], resize_keyboard=True))
         return
 
     if text == "⏹️ Завершить":

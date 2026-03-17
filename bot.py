@@ -74,11 +74,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "class":
-        db_cursor.execute("INSERT INTO users VALUES (NULL, ?, ?, ?, ?, CURRENT_TIMESTAMP)", (user.id, user.username, context.user_data['name'], text))
+        db_cursor.execute(
+            "INSERT INTO users VALUES (NULL, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            (user.id, user.username, context.user_data['name'], text)
+        )
         db_conn.commit()
         context.user_data.clear()
-        await update.message.reply_text("Регистрация завершена!")
-        await show_main_menu(update, user.id)
+        await update.message.reply_text("✅ Регистрация завершена!")
+        await show_main_menu(update, user.id)   # 👈 ЭТО ВАЖНО
         return
 
     if text == "📚 Начать задание":

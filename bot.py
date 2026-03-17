@@ -114,6 +114,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Выбери предмет:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
         return
 
+    if text in SUBJECTS:
+        context.user_data['current_subject'] = text
+        context.user_data['start_datetime'] = datetime.now(MOSCOW_TZ)
+        save_active_timer(user.id, text, context.user_data['start_datetime'])
+        await update.message.reply_text(
+            f"✅ Начато: {text}",
+            reply_markup=ReplyKeyboardMarkup([["⏹️ Завершить"]], resize_keyboard=True)
+        )
+        return
+
     if text == "⏹️ Завершить":
         if 'current_subject' in context.user_data:
             subj = context.user_data['current_subject']

@@ -87,14 +87,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "class":
+        # Добавляем пользователя в базу
         db_cursor.execute(
-            "INSERT INTO users VALUES (NULL, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-            (user.id, user.username, context.user_data['name'], text)
+            "INSERT OR IGNORE INTO users (user_id, username, full_name, class, registered_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+            (user.id, user.username, context.user_data.get('name', 'Неизвестно'), text)
         )
         db_conn.commit()
         context.user_data.clear()
+
+        # Показываем меню
         await update.message.reply_text("✅ Регистрация завершена!")
-        await show_main_menu(update, user.id)
+
+    if is_admin(user.id):
+            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel"]]
+        else:
+            kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]
+
+        await update.message.reply_text(
+            "Выбери действие:",
+            reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True)
+        )
         return
 
     if text == "📚 Начать задание":

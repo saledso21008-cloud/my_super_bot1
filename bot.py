@@ -60,7 +60,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         count = db_cursor.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         await update.message.reply_text(f"👥 Всего пользователей в боте: {count}")
         return
-    
+
     if text == "/resetme":
         db_cursor.execute("DELETE FROM users WHERE user_id = ?", (user.id,))
         db_conn.commit()
@@ -87,18 +87,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "class":
-        # Добавляем пользователя в базу
         db_cursor.execute(
             "INSERT OR IGNORE INTO users (user_id, username, full_name, class, registered_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
-            (user.id, user.username, context.user_data.get('name', 'Неизвестно'), text)
+            (user.id, user.username, context.user_data.get("name", "Неизвестно"), text)
         )
         db_conn.commit()
         context.user_data.clear()
 
-        # Показываем меню
         await update.message.reply_text("✅ Регистрация завершена!")
 
-    if is_admin(user.id):
+        if is_admin(user.id):
             kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["📢 Отправить напоминание всем"], ["📊 Получить Excel"]]
         else:
             kb = [["📚 Начать задание"], ["📊 Моя статистика"], ["🏠 Главное меню"]]
@@ -110,7 +108,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if text == "📚 Начать задание":
-        # Проверяем, есть ли пользователь в базе
         user_in_db = db_cursor.execute("SELECT * FROM users WHERE user_id = ?", (user.id,)).fetchone()
         if not user_in_db:
             await update.message.reply_text(
@@ -121,7 +118,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data['step'] = 'name'
             return
 
-        # Если пользователь есть — показываем предметы
         kb = [SUBJECTS[i:i+2] for i in range(0, len(SUBJECTS), 2)] + [["🏠 Главное меню"]]
         await update.message.reply_text("Выбери предмет:", reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True))
         return
